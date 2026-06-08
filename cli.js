@@ -33,7 +33,7 @@ let noLog = false;
 async function bridgeCall(expression, awaitPromise = true) {
   const resp = await bridge.call({ site: SITE, expression, awaitPromise });
   if (resp.ok) return resp.value;
-  throw new Error(resp.error || 'Unknown error');
+  throw new Error(resp.error || 'Bridge Server 返回未知错误');
 }
 
 async function loggedCall(endpoint, params, expression) {
@@ -146,7 +146,15 @@ async function main() {
     if (!noLog && audit._currentOp) {
       audit.endOperation('error', {}, null, e.message);
     }
-    console.error(`错误: ${e.message}`);
+    // ECONNREFUSED 友好提示
+    if (e.message.includes('ECONNREFUSED') || e.message.includes('Bridge Server 未启动')) {
+      console.error('错误: Bridge Server 未启动，请先运行:');
+      console.error('  node server.js');
+    } else if (e.message.includes('Unauthorized')) {
+      console.error('错误: 认证失败 — 请检查 config.json 中的 bridge.token');
+    } else {
+      console.error(`错误: ${e.message}`);
+    }
     process.exit(1);
   }
 }
