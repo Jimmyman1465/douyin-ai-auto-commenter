@@ -10,10 +10,14 @@
     "analyze": "node cli.js analyze",
     "suggest": "node cli.js suggest",
     "dashboard": "node cli.js dashboard",
-    "log": "node cli.js log"
+    "log": "node cli.js log",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "ws": "^8.18.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vitest": "^4.1.8"
+  }
 }
