@@ -381,13 +381,26 @@ async function cmdSuggest(args) {
   const suggestions = await client.suggestReplies(toReply, strategy);
 
   const results = [];
-  for (const s of suggestions.slice(0, 30)) {
+  const autoList = suggestions.slice(0, 30);
+  let postedCount = 0;
+  const POST_INTERVAL_MS = 60000; // 每条评论间隔 60 秒，防止风控
+
+  for (let i = 0; i < autoList.length; i++) {
+    const s = autoList[i];
     if (auto && s.reply) {
+      // 非首条发布前等待间隔
+      if (postedCount > 0) {
+        console.error(`⏳ 等待 ${POST_INTERVAL_MS / 1000}s 后发布下一条... (${postedCount + 1}/${autoList.length})`);
+        await new Promise(r => setTimeout(r, POST_INTERVAL_MS));
+      }
       try {
         const postResult = await cmdPost([s.aweme_id || awemeId, s.reply, '--reply-to', s.cid]);
         results.push({ ...s, posted: true, post_cid: postResult.cid });
+        postedCount++;
+        console.error(`✓ 已发布 ${postedCount}/${autoList.length}: ${s.reply.slice(0, 30)}...`);
       } catch (e) {
         results.push({ ...s, posted: false, error: e.message });
+        console.error(`✗ 发布失败: ${e.message}`);
       }
     } else {
       results.push(s);
