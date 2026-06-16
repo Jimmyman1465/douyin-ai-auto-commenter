@@ -104,8 +104,14 @@ Douyin Comment CLI (Bridge Framework)
   node cli.js suggest <aweme_id>              LLM 回复建议（--auto 自动发布）
   node cli.js dashboard                       仪表盘 HTML
   node cli.js dashboard --video <aweme_id> --days 14
-  node cli.js log [--tail N] [--video <id>] [--failed]
-  node cli.js profile <uid>                   用户交互历史
+  node cli.js log [--tail N] [--video <id>] [--uid <uid>] [--command <cmd>] [--failed]
+  node cli.js profile <uid>                   用户交互历史（事件流）
+  node cli.js whois <uid>                     用户全量画像（评论 + 我的回复 + 标签）
+  node cli.js note <uid> [--tier vip|normal|blacklist|spam] [--tag T] [--untag T] [--notes "..."] [--clear]
+  node cli.js events [--tail N] [--video <id>] [--uid <uid>] [--cmd <cmd>] [--status success|error] [--since <ts>] [--json]
+  node cli.js corpus <search|recent|stats> [...]   回复语料库
+  node cli.js failures [--limit N] [--recent]      失败模式 top-N（避雷清单）
+  node cli.js dedup "<候选回复文本>"                  检查文本是否曾经发过
 
   通用选项： --raw（原始输出） --no-log（本次不记录日志）
 

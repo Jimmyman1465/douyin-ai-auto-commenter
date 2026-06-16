@@ -173,6 +173,15 @@ export OPENAI_MODEL="gpt-4o-mini"     # 可选，模型名称
 ## 依赖
 
 - Node.js 18+
-- `ws` — Bridge Server 依赖（`npm install` 安装）
+- `ws` — Bridge Server 依赖
+- `better-sqlite3` — v3 持久化记忆层（首次安装自动预编译）
+- 安装：`npm install`（首次必须执行）
 - Chrome + Tampermonkey 扩展
 - （可选）OpenAI API key — `analyze` / `suggest` 命令
+
+## v3 持久化记忆（开发中）
+
+v3.0 在 `storage/douyin.db`（SQLite）累积事件流与实体记忆，逐步替换 `logs/audit.json` 的全表扫路径。当前已完成 **P0：SQLite 接入 + 双写**——所有命令在写 audit.json 的同时旁路写入 events 表，行为完全向后兼容。
+
+- 历史回灌：`node scripts/import-audit-v2.js`（幂等）
+- 完整路线图：`docs/v3-roadmap.md`

@@ -3,6 +3,7 @@ node_modules/
 logs/
 docs/
 downloads/
+storage/
 *.pid
 
 # 安全：不提交包含密钥的配置文件

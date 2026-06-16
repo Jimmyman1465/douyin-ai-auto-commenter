@@ -9,17 +9,21 @@
 ## Layout
 - `cli.js` — 入口：命令路由、Bridge 通信、审计日志
 - `server.js` — Bridge Server 入口（WebSocket + HTTP API）
-- `lib/audit.js` — 审计日志模块（操作记录/结果持久化/增量查询）
+- `lib/audit.js` — 审计日志模块（操作记录/结果持久化/增量查询）→ v3 起对 SQLite 双写
 - `lib/dashboard.js` — HTML 仪表盘生成（Chart.js）
 - `lib/llm.js` — OpenAI-compatible LLM 客户端
 - `lib/commands/` — CLI 命令模块（每个命令独立文件）
+- `lib/memory/` — **v3 持久化记忆层**（SQLite 单例 / 事件流；后续 P2-P4 在此扩展实体表 / 语料 / Campaign）
 - `lib/server/` — Bridge Server 核心（registry / router / ws-hub）
 - `lib/client/` — HTTP 客户端封装（CLI / SDK 共用）
 - `lib/shared/` — 共享协议定义 + 序列化工具
+- `storage/douyin.db` — **v3 SQLite 数据库**（WAL，gitignore）
 - `config.json` — Bridge 连接 + LLM 配置
-- `package.json` — 零外部依赖（仅 ws 需 npm install）
+- `package.json` — 依赖：`ws` + `better-sqlite3`（v3）
 - `scripts/douyin.user.js` — 油猴脚本（GM_xmlhttpRequest 绕过 PNA，注入 __bridge API）
 - `scripts/_template.user.js` — 油猴脚本模板（新站点参考）
+- `scripts/import-audit-v2.js` — **v3 历史回灌脚本**（logs/audit.json → events 表，幂等）
+- `docs/v3-roadmap.md` — **v3 升级路线图**（P0-P5 逐阶段任务/schema/验收）
 - `SKILL.md` — agent 操作手册
 - `reply-strategy.md` — 自动回复策略模板
 
@@ -66,4 +70,30 @@ Bridge Server 代码已本地化（server.js + lib/server/ + lib/client/ + lib/s
 - **点赞/取消点赞** — `type=1` 点赞，`type=0` 取消，同一接口 `/commit/item/digg/`
 - **删除评论** — 只能删除自己的评论，接口 `/comment/delete?cid=`，POST 无 body
 - **视频下载** — 通过 `/aweme/detail/` 获取视频详情，`play_addr` / `bit_rate` 提取视频 URL，`music.play_url` 提取 BGM；下载保存到 `./downloads/`（已 gitignore）
-- **零 npm 依赖** — 安装后无需 `npm install`
+- **零 npm 依赖** — ~~安装后无需 `npm install`~~ → v3 起需 `npm install`（新增 `better-sqlite3`，原生模块需要预编译）
+
+---
+
+## v3 Memory Layer（P0 已完成）
+
+> 完整路线图见 `docs/v3-roadmap.md`。
+
+### 设计要点
+- **双写过渡**：所有 v2 命令仍旧写 `logs/audit.json`，AuditLogger 末尾旁路写入 SQLite `events` 表。SQLite 写失败不抛异常，audit.json 仍是真实之源。
+- **存储**：`storage/douyin.db`（WAL 模式，多进程并发安全），`PRAGMA user_version` 管理 schema 版本。
+- **自愈**：删除 `storage/` 后任意命令自动重建库 + 跑 schema 迁移到最新版本。
+- **跨平台预留**：所有表带 `platform TEXT NOT NULL DEFAULT 'douyin'` 字段，未来与 xiaohongshu skill 共享 reply_corpus / users。
+
+### 当前 schema（v1）
+- `events` — 操作事件流（替代 audit.json 全表扫）
+  - 索引：`(aweme_id, ts) (uid, ts) (command, ts) (session_id)`
+
+### 模块入口
+- `lib/memory/db.js` — `getDb()` 单例 + WAL + 自动迁移
+- `lib/memory/events.js` — `append() / query() / count() / findLastFetchTime()`
+- `scripts/import-audit-v2.js` — 历史 audit.json → events 表，幂等
+
+### Watch out for（v3）
+- **schema 演进**：在 `lib/memory/db.js` 的 `migrations` 数组追加新版本，并把 `SCHEMA_VERSION` +1。每个 migration 必须幂等（用 `CREATE * IF NOT EXISTS`）。
+- **better-sqlite3 跨平台**：Win/Mac/Linux 预编译包通常自动装上；如失败手动 `npm rebuild better-sqlite3`。
+- **events 写入是只写不阻塞**：上层永远不应 `await` 它的副作用；查询路径如果走 SQL 失败应回退到 audit.json。
