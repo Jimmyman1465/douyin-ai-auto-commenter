@@ -22,6 +22,8 @@
     "max_send_per_day": 20,
     "run_timeout_minutes": 60,
     "min_interval_seconds": 60,
+    "max_interval_seconds": 75,
+    "bridge_batch_size": 5,
     "max_attempts": 2,
     "max_consecutive_failures": 3
   },

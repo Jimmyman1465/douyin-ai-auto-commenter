@@ -32,6 +32,25 @@ node cli.js auto-campaign status --latest
 node cli.js auto-campaign report --latest --markdown --out reports/latest.md
 ```
 
+### 已知视频链接快速评论
+
+如果已经有视频链接或视频 ID，可跳过搜索、页面导航和评论框定位，直接复用已登录页面中的 Bridge 发布：
+
+```bash
+# 可从 config/quick-comment-targets.example.txt 复制目标文件；每行一个链接或 ID
+node cli.js quick-comment validate --input targets.txt --config config/ai-campaign.json
+node cli.js quick-comment run --input targets.txt --config config/ai-campaign.json --dry-run
+node cli.js quick-comment run --input targets.txt --config config/ai-campaign.json --live
+
+# 也可从标准输入读取
+Get-Content targets.txt | node cli.js quick-comment run --input - --config config/ai-campaign.json --dry-run
+
+# 登录或验证码处理完成后恢复原运行
+node cli.js quick-comment resume RUN_ID --config config/ai-campaign.json
+```
+
+`run` 默认仍是 dry-run，只有显式提供 `--live` 才会真实发送。本命令不会逐个打开视频页面；它把最多 `limits.bridge_batch_size` 条任务一次下发到已登录页面，在浏览器内部按 `min_interval_seconds`～`max_interval_seconds` 连续执行。正常返回评论 `cid` 后直接记为成功，验证码会停止本批并保留未开始项，超时等结果不确定情况只读核验且禁止盲目重发。
+
 幂等键由实际账号 UID、视频 ID 和文案版本哈希组成，账号别名仅用于显示。同一 UID 即使更换别名，重复运行也不会再次发布。网络超时发生在发布调用之后时，任务进入 `unknown`；系统只会只读核验，不会因“没有查到”而自动重发。示例配置默认 `dry_run: true`，CI 也不会执行真实评论。
 
 `dry-run` 运行永远不能通过 `resume` 转成正式发送；正式发送必须新建运行，并在任何搜索或写入前核验浏览器登录 UID 与 `account_uid` 完全一致。同一实际账号同一时刻只允许一个正式 worker 持有发送租约。`stop` 与 dispatch permit 在 SQLite 事务中线性化：停止先提交则该任务零写入、零 attempt；permit 先提交则该次已视为进入发送，结果不明时只核验、不盲目重发。

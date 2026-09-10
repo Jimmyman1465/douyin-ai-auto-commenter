@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         Bridge: Douyin
 // @namespace    bridge-framework
+// @version      1.1.0
 // @match        *://*.douyin.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
@@ -966,6 +967,55 @@ window.__bridge = {
     var q=new URLSearchParams();for(var key in qParams){if(qParams.hasOwnProperty(key))q.set(key,qParams[key]);}
     // publish 是写操作，readOnly=false，绝不自动重试（避免重复发布）
     return await bridgeFetchJson('publish','/aweme/v1/web/comment/publish/?'+q,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b.toString(),credentials:'include'},false);
+  },
+  publishBatch: async function(items,options){
+    options=options||{};
+    if(!Array.isArray(items)||items.length===0)throw new Error('publishBatch items required');
+    if(items.length>10)throw new Error('publishBatch maximum is 10 items');
+    var minMs=Math.max(1000,Number(options.intervalMinMs)||1000);
+    var maxMs=Math.max(minMs,Number(options.intervalMaxMs)||minMs);
+    var stopOnError=options.stopOnError!==false;
+    var results=[];
+    var seen={};
+    for(var i=0;i<items.length;i++){
+      var item=items[i]||{};
+      var awemeId=String(item.awemeId||'');
+      var text=String(item.text||'');
+      if(!/^\d{5,30}$/.test(awemeId)||!text||text.length>500||seen[awemeId]){
+        results.push({awemeId:awemeId,status:'not_started',errorCode:'INVALID_BATCH_ITEM',errorMessage:'invalid or duplicate batch item'});
+        if(stopOnError){
+          for(var invalidRest=i+1;invalidRest<items.length;invalidRest++)results.push({awemeId:String((items[invalidRest]||{}).awemeId||''),status:'not_started'});
+          break;
+        }
+        continue;
+      }
+      seen[awemeId]=true;
+      if(i>0){
+        var delay=minMs+Math.floor(Math.random()*(maxMs-minMs+1));
+        await new Promise(function(resolve){setTimeout(resolve,delay);});
+      }
+      try{
+        var data=await this.publish(awemeId,text);
+        if(data&&data.status_code!==undefined&&data.status_code!==0){
+          var platformCode=Number(data.status_code);
+          results.push({awemeId:awemeId,status:'blocked',errorCode:(platformCode===8||platformCode===2053)?'RATE_LIMITED':'CONTENT_REJECTED',errorMessage:'status_code='+platformCode});
+        }else if(data&&data.comment&&data.comment.cid){
+          results.push({awemeId:awemeId,status:'succeeded',cid:String(data.comment.cid),text:data.comment.text||text,time:data.comment.create_time||0});
+        }else{
+          results.push({awemeId:awemeId,status:'unknown',errorCode:'UNKNOWN_AFTER_DISPATCH',errorMessage:'服务器未返回评论数据'});
+        }
+      }catch(error){
+        var message=String(error&&error.message||error||'publish failed');
+        var code=/验证码|captcha|challenge|滑块/i.test(message)?'CHALLENGE_REQUIRED':(/登录|unauthori|cookie/i.test(message)?'AUTH_EXPIRED':(/频繁|rate.?limit|status_code=(8|2053)/i.test(message)?'RATE_LIMITED':'UNKNOWN_AFTER_DISPATCH'));
+        results.push({awemeId:awemeId,status:code==='UNKNOWN_AFTER_DISPATCH'?'unknown':'blocked',errorCode:code,errorMessage:message.slice(0,300)});
+      }
+      var last=results[results.length-1];
+      if(stopOnError&&last.status!=='succeeded'){
+        for(var rest=i+1;rest<items.length;rest++)results.push({awemeId:String((items[rest]||{}).awemeId||''),status:'not_started'});
+        break;
+      }
+    }
+    return {results:results,finishedAt:Date.now()};
   },
   digg: async function(awemeId,type){
     var p=new URLSearchParams(Object.assign(this._q(),{}));

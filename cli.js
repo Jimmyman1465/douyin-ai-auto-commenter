@@ -31,16 +31,21 @@ let noLog = false;
 // Bridge 通信（通过 BridgeClient）
 // ═══════════════════════════════════════════════════════════
 
-async function bridgeCall(expression, awaitPromise = true) {
-  const resp = await bridge.call({ site: SITE, expression, awaitPromise });
+async function bridgeCall(expression, awaitPromise = true, options = {}) {
+  const resp = await bridge.call({
+    site: SITE,
+    expression,
+    awaitPromise,
+    timeout: options.timeout,
+  });
   if (resp.ok) return resp.value;
   throw new Error(resp.error || 'Bridge Server 返回未知错误');
 }
 
-async function loggedCall(endpoint, params, expression) {
+async function loggedCall(endpoint, params, expression, options = {}) {
   const t0 = Date.now();
   try {
-    const result = await bridgeCall(expression);
+    const result = await bridgeCall(expression, true, options);
     const ms = Date.now() - t0;
     const sum = {};
     if (result) {
@@ -137,6 +142,11 @@ Douyin Comment CLI (Bridge Framework)
   node cli.js auto-campaign stop <run_id>               请求安全停止
   node cli.js auto-campaign resume <run_id> --config <file>  核验未知结果后恢复
   node cli.js auto-campaign report --latest [--markdown] [--out <file>]
+  node cli.js quick-comment validate --input <file> --config <file>  解析并校验视频链接列表
+  node cli.js quick-comment run --input <file> --config <file>       快速通道 dry-run（默认）
+  node cli.js quick-comment run --input <file> --config <file> --live  单次授权本批真实发送
+  node cli.js quick-comment resume <run_id> --config <file>          验证处理后恢复
+  node cli.js quick-comment status --latest|<run_id>                 查看快速任务状态
 
   AI 回复生成（ReplyEngine）：
   node cli.js getReply <aweme_id>                    生成视频的顶级评论
