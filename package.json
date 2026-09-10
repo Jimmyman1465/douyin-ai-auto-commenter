@@ -43,6 +43,7 @@
     "suggest": "node cli.js suggest",
     "dashboard": "node cli.js dashboard",
     "log": "node cli.js log",
+    "quick-comment": "node cli.js quick-comment",
     "test": "vitest run",
     "test:watch": "vitest"
   },
