@@ -131,6 +131,12 @@ Douyin Comment CLI (Bridge Framework)
   node cli.js repo-info [<owner/repo>]       获取 GitHub 仓库真实信息（推广评论事实源，缓存 1h，--refresh 强制刷新）
   node cli.js factcheck "<文本>"               推广评论发布前事实校验（star 数/仓库名/版本号 vs repo-info 缓存）
   node cli.js campaign <create|plan|run|stop|pause|resume|status|list>  推广引擎（跨视频可暂停可恢复；run --daemon 后台）
+  node cli.js auto-campaign validate --config <file>    校验 AI 视频固定评论配置
+  node cli.js auto-campaign run --config <file> [--dry-run]  筛选并批量自动评论
+  node cli.js auto-campaign status --latest|<run_id>    查看运行和任务状态
+  node cli.js auto-campaign stop <run_id>               请求安全停止
+  node cli.js auto-campaign resume <run_id> --config <file>  核验未知结果后恢复
+  node cli.js auto-campaign report --latest [--markdown] [--out <file>]
 
   AI 回复生成（ReplyEngine）：
   node cli.js getReply <aweme_id>                    生成视频的顶级评论
@@ -204,7 +210,7 @@ async function main() {
     } else {
       console.error(`错误: ${e.message}`);
     }
-    process.exit(1);
+    process.exitCode = e.exitCode || 1;
   }
 }
 

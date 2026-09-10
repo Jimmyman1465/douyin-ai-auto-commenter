@@ -1,13 +1,40 @@
 # 🎵 Douyin Comment CLI
 
-[![test](https://github.com/Yht20927/douyin-cli/actions/workflows/test.yml/badge.svg)](https://github.com/Yht20927/douyin-cli/actions/workflows/test.yml)
+[![test](https://github.com/Jimmyman1465/douyin-ai-auto-commenter/actions/workflows/test.yml/badge.svg)](https://github.com/Jimmyman1465/douyin-ai-auto-commenter/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > 适用版本: v4 · 最后更新: 2026-08-27 · 维护者: Yht20927
 
+> 本项目基于 [Yht20927/douyin-cli](https://github.com/Yht20927/douyin-cli) 的 MIT 许可代码开发，并保留原作者署名与许可证。
+
 > 抖音评论运营 CLI 工具。基于 Bridge Framework（Bridge Server + 油猴脚本），支持视频搜索、评论获取、**AI 人格化回复**、**ReplyEngine 独立生成**、**草稿管理**、运营仪表盘。
 
 核心亮点：**ReplyEngine 评论生成引擎**（generateComment / generateReply / generateReplies）+ **A-F 六类回复策略** + **Anthropic & OpenAI 双 Provider 支持** + **Token 用量追踪**，让代管自有账号的评论运营全流程自动化。
+
+## AI 相关视频固定文案自动评论
+
+新增的 `auto-campaign` 命令会按多个关键词搜索视频、去重、规则评分、持久化任务，并在正式模式下串行发送同一份固定文案。它不会逐条询问确认，但遇到登录失效、验证码、限流或发送结果未知时会停止，且不会尝试绕过平台限制。
+
+```bash
+# 复制示例后填写 fixed_comment，并更新 comment_version
+cp config/ai-campaign.example.json config/ai-campaign.json
+
+# 只校验配置
+node cli.js auto-campaign validate --config config/ai-campaign.json
+
+# 推荐先跑：搜索、筛选、入队，不发送评论
+node cli.js auto-campaign run --config config/ai-campaign.json --dry-run
+
+# 正式模式需填写 account_uid，并把 runtime.dry_run 改为 false
+node cli.js auto-campaign run --config config/ai-campaign.json
+
+node cli.js auto-campaign status --latest
+node cli.js auto-campaign report --latest --markdown --out reports/latest.md
+```
+
+幂等键由实际账号 UID、视频 ID 和文案版本哈希组成，账号别名仅用于显示。同一 UID 即使更换别名，重复运行也不会再次发布。网络超时发生在发布调用之后时，任务进入 `unknown`；系统只会只读核验，不会因“没有查到”而自动重发。示例配置默认 `dry_run: true`，CI 也不会执行真实评论。
+
+`dry-run` 运行永远不能通过 `resume` 转成正式发送；正式发送必须新建运行，并在任何搜索或写入前核验浏览器登录 UID 与 `account_uid` 完全一致。同一实际账号同一时刻只允许一个正式 worker 持有发送租约。`stop` 与 dispatch permit 在 SQLite 事务中线性化：停止先提交则该任务零写入、零 attempt；permit 先提交则该次已视为进入发送，结果不明时只核验、不盲目重发。
 
 ---
 
@@ -40,7 +67,7 @@
 | 🛡️ 风控断路器 | 10 分钟内 post 失败 ≥3 次自动暂停 |
 | 📥 视频下载 | 下载视频+音频（BGM），支持 ffmpeg 截图多模态分析 |
 | 📊 运营仪表盘 | 本地 HTML 可视化，含推广活动卡片 |
-| 💾 持久化记忆 | SQLite schema v8（events / users / videos / comments / corpus / failures / campaigns / llm_usage / drafts） |
+| 💾 持久化记忆 | SQLite schema v11（含 UID 级幂等、auto-campaign 任务和账号发送锁） |
 
 ---
 
@@ -327,7 +354,7 @@ douyin-cli/
 │   │   ├── prompt-builder.js # 5 种 Prompt 模式组装器
 │   │   └── video-context.js  # 视频上下文加载（含 ffmpeg 截图）
 │   ├── memory/               # SQLite 持久化记忆层
-│   │   ├── db.js             # 单例 + WAL + schema 迁移（v8）
+│   │   ├── db.js             # 单例 + WAL + schema 迁移（v11）
 │   │   ├── events/users/comments/videos.js
 │   │   ├── corpus/failures/campaigns.js
 │   │   ├── drafts.js         # 草稿管理（v4 新增）
@@ -369,7 +396,7 @@ douyin-cli/
 
 ## 📦 依赖
 
-- Node.js 18+
+- Node.js 22+
 - `ws` — WebSocket
 - `better-sqlite3` — SQLite
 - Chrome + Tampermonkey + 油猴脚本

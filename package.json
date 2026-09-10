@@ -1,27 +1,33 @@
 {
-  "name": "douyin-comment-cli",
-  "version": "2.0.0",
-  "description": "抖音评论运营 CLI — Bridge Framework（油猴 + WebSocket），含 AI 人格化回复、节奏守卫、SQLite 记忆层、推广引擎",
+  "name": "douyin-ai-auto-commenter",
+  "version": "1.0.0",
+  "description": "筛选抖音 AI 相关视频并安全批量发送固定文案的可恢复 CLI",
   "license": "MIT",
-  "author": "Yht20927",
-  "homepage": "https://github.com/Yht20927/douyin-cli#readme",
+  "author": "Yht20927 and contributors",
+  "homepage": "https://github.com/Jimmyman1465/douyin-ai-auto-commenter#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Yht20927/douyin-cli.git"
+    "url": "git+https://github.com/Jimmyman1465/douyin-ai-auto-commenter.git"
   },
   "bugs": {
-    "url": "https://github.com/Yht20927/douyin-cli/issues"
+    "url": "https://github.com/Jimmyman1465/douyin-ai-auto-commenter/issues"
   },
   "keywords": [
-    "douyin", "tiktok", "comment", "automation", "bridge",
-    "tampermonkey", "cli", "sqlite"
+    "douyin",
+    "tiktok",
+    "comment",
+    "automation",
+    "bridge",
+    "tampermonkey",
+    "cli",
+    "sqlite"
   ],
   "main": "cli.js",
   "bin": {
     "dy": "./cli.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "server": "node server.js",
@@ -41,7 +47,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "^12.11.1",
     "ws": "^8.18.0"
   },
   "devDependencies": {

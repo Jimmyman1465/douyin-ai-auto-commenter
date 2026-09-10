@@ -8,6 +8,8 @@ storage/
 
 # 安全：不提交包含密钥的配置文件
 config.json
+config/ai-campaign.json
+reports/
 
 reply-strategy.md
 

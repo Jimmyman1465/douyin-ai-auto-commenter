@@ -1,0 +1,33 @@
+{
+  "config_schema_version": 1,
+  "campaign_name": "ai-related-fixed-comment",
+  "account_alias": "primary",
+  "account_uid": "",
+  "keywords": ["AI工具", "AI Agent", "人工智能", "大模型"],
+  "fixed_comment": "FIXED_COPY",
+  "comment_version": "2026-09-10-v1",
+  "filters": {
+    "include_terms": ["AI", "人工智能", "大模型", "智能体", "Agent"],
+    "exclude_terms": ["招聘", "培训招生"],
+    "excluded_author_ids": [],
+    "max_video_age_days": 7,
+    "min_comment_count": 0,
+    "min_like_count": 0,
+    "relevance_threshold": 0.70,
+    "use_llm_for_borderline": false
+  },
+  "limits": {
+    "max_candidates_per_keyword": 20,
+    "max_send_per_run": 10,
+    "max_send_per_day": 20,
+    "run_timeout_minutes": 60,
+    "min_interval_seconds": 60,
+    "max_attempts": 2,
+    "max_consecutive_failures": 3
+  },
+  "runtime": {
+    "dry_run": true,
+    "stop_on_auth_error": true,
+    "stop_on_challenge": true
+  }
+}
