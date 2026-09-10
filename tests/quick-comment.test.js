@@ -140,6 +140,25 @@ describe('quick-comment orchestration', () => {
     expect(report.stats).toMatchObject({ succeeded: 2, total: 2 });
   }));
 
+  it('falls back safely when the installed browser script is older', withTempDb(async () => {
+    const { runQuickComment } = require('../lib/quick-comment/orchestrator');
+    let batches = 0;
+    const singles = [];
+    const report = await runQuickComment(config(), [
+      { awemeId: '7655315645270140130', source: 'one' },
+      { awemeId: '7657506425620000001', source: 'two' },
+    ], {
+      getCurrentAccountUid: async () => 'me',
+      supportsBatch: async () => false,
+      publishBatch: async () => { batches++; },
+      publish: async awemeId => { singles.push(awemeId); return { cid: `c-${awemeId}` }; },
+      verifyPublished: async () => ({ verified: false }),
+    }, { workerOptions: { sleep: async () => {} } });
+    expect(batches).toBe(0);
+    expect(singles).toEqual(['7655315645270140130', '7657506425620000001']);
+    expect(report.stats.succeeded).toBe(2);
+  }));
+
   it('rolls confirmed not-started batch items back without consuming an attempt', withTempDb(async () => {
     const { runQuickComment } = require('../lib/quick-comment/orchestrator');
     const report = await runQuickComment(config({ limits: {
@@ -207,6 +226,19 @@ describe('quick-comment orchestration', () => {
 });
 
 describe('quick-comment browser adapter', () => {
+  it('detects whether the installed browser script supports batching', async () => {
+    const { createDouyinAdapter } = require('../lib/auto-campaign/adapters');
+    const expressions = [];
+    const adapter = createDouyinAdapter({
+      loggedCall: async (_endpoint, _params, expression) => {
+        expressions.push(expression);
+        return true;
+      },
+    });
+    await expect(adapter.supportsBatch()).resolves.toBe(true);
+    expect(expressions).toEqual(['typeof window.__bridge.publishBatch === "function"']);
+  });
+
   it('serializes a whole batch into one bridge request with a long transport timeout', async () => {
     const { createDouyinAdapter } = require('../lib/auto-campaign/adapters');
     const calls = [];
