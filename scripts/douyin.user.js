@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Bridge: Douyin
 // @namespace    bridge-framework
-// @version      1.1.0
+// @version      1.1.1
 // @match        *://*.douyin.com/*
+// @noframes
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      127.0.0.1
@@ -19,6 +20,10 @@
 
 (function () {
   'use strict';
+
+  // Tampermonkey may inject matching scripts into Douyin's hidden iframes.
+  // Only the top-level page owns the video/comment UI and may register with Bridge.
+  if (window.top !== window.self) return;
 
   const CONFIG = {
     server: 'http://127.0.0.1:19422',

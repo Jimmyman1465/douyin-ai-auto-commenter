@@ -2,6 +2,7 @@
 // @name         Bridge: {{SITE_NAME}}
 // @namespace    bridge-framework
 // @match        {{URL_PATTERN}}
+// @noframes
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      127.0.0.1
@@ -15,6 +16,9 @@
 
 (function() {
   'use strict';
+
+  // Only the top-level page should own the Bridge connection and page actions.
+  if (window.top !== window.self) return;
 
   var CONFIG = {
     server: 'http://127.0.0.1:19422',
