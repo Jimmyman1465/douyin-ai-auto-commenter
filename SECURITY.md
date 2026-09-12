@@ -1,6 +1,6 @@
 # Security Policy
 
-> 适用版本: v3 · 最后更新: 2026-07-07 · 维护者: Yht20927
+> 适用版本: v3 · 最后更新: 2026-09-12
 
 ---
 
@@ -8,9 +8,7 @@
 
 **请勿在公开 issue 中报告安全漏洞。**
 
-优先渠道：
-1. **GitHub Security Advisory**（推荐）— 仓库 Security 标签 → "Report a vulnerability"，私密协作披露
-2. 邮件：`security@example.invalid`，主题前缀 `[douyin-cli security]`
+优先使用 **GitHub Security Advisory**：仓库 Security 标签 → “Report a vulnerability”，进行私密协作披露。
 
 报告请包含：影响版本、复现步骤、影响范围、建议修复方向。收到后 72 小时内响应。
 

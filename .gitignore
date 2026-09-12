@@ -9,6 +9,9 @@ storage/
 # 安全：不提交包含密钥的配置文件
 config.json
 config/ai-campaign.json
+.env
+.env.*
+!.env.example
 reports/
 
 reply-strategy.md
@@ -26,3 +29,5 @@ downloads/
 
 # 崩溃堆栈转储
 *.stackdump
+*.xlsx
+*.inspect.ndjson

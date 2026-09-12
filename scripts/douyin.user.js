@@ -28,7 +28,7 @@
   const CONFIG = {
     server: 'http://127.0.0.1:19422',
     site: 'douyin.com',
-    token: '',  // 填入 config.json 中的 bridge.token
+    token: '',  // 本地安装后填入 config.json 中的 bridge.token；不要提交真实令牌
     reconnectDelay: 2000,
   };
 
